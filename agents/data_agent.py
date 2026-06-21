@@ -94,3 +94,60 @@ def seismic_data(lat:float,lon:float) -> dict:
         "region": region,
         "is_live": False,
     }
+
+#Node 
+
+class DisasterState(TypedDict):
+
+    raw_input : dict
+    longitude : Optional[float]
+    latitude : Optional[float]
+    month : Optional[int]
+    hour : Optional[int]
+    year : Optional[int]
+    subbasin : Optional[str]
+    initial_wind: Optional[float]
+    pressure_hpa: Optional[float]
+    depth: Optional[float]
+    earthquake_data_is_live: Optional[bool]
+    is_valid: bool
+    validation_errors: list
+
+def get_subbasin(lat:float,lon:float) -> Optional[str]:
+
+    if 5<=lat<=22 and 80 <=lon<=100: return "BB"
+    elif 5<=lat<=25 and 60<=lon<=78: return "AB"
+
+    return None
+
+def data_agent(state:DisasterState) -> DisasterState:
+
+    location = state["raw_input"].get("location")
+    if not location:
+        state.update({"is_valid":False,"validation_errors":["Location not provided"]})
+        return state
+    
+    try:
+        geo = geocode_location(location)
+    except Exception as e:
+        state.update({"is_valid":False,"validation_errors":[str(e)]})
+        return state
+    lat,lon = geo["latitude"],geo["longitude"]
+    now = datetime.now(timezone.utc)
+    weather = fetch_current_waather(lat,lon)
+    seismic = get_seismic_region(lat,lon)
+
+    state.upadte({
+        "latitude":lat,"longitude":lon,
+        "month": now.month, "hour": now.hour, "year": now.year,
+        "subbasin":get_subbasin(lat,lon),
+        "initial_wind": weather["wind_speed_kt"],
+        "pressure_hpa": weather["pressure_hpa"],
+        "depth":seismic["depth"],
+        "earthquake_data_is_live":seismic["is_live"],
+        "is_valid":True,
+        "validation_errors":[]
+    })
+
+    return state
+
