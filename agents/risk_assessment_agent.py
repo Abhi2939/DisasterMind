@@ -5,7 +5,6 @@ import shap
 from typing import Optional,TypedDict,Literal
 
 #Loading Models
-
 model1 = joblib.load("models/model1_cyclone_vs_earthquake.pkl")
 
 model2 = joblib.load("models/model2_cyclone_severity.pkl")
@@ -84,6 +83,54 @@ def cyclone_severity(state:DisasterState) -> DisasterState:
     state["severity_confidence"] = float(proba[pred])
 
     shap_vals = model2_shap.shap_values(raw)
+    vals = shap_vals[0] if isinstance(shap_vals,list) else shap_vals[0]
+
+    state["shap_factors"] = dict(zip(raw.column,vals.tolist() if hasattr(vals,"tolist") else vals))
+
+    return state
+
+# Model3 :- Earthquake Severity 
+
+def earthquake_severity(state:DisasterState) -> DisasterState:
+
+    depth = state["depth"]
+    lat = state["latitude"]
+    lon = state["longitude"]
+
+    region = (
+        "Himalayan" if lat >= 28 else
+        "Western" if lon <= 72 else
+        "Southern" if lat <= 15 else
+        "Northern" if lon>=90 else
+        "Central"
+    )
+
+    depth_zone = pd.cut(
+        depth,
+        bins=[0, 70, 300, 700],
+        labels=['Shallow', 'Intermediate', 'Deep']
+    )
+    raw = pd.DataFrame([{
+        "depth": depth,
+        "log_depth": np.log1p(max(depth, 0)),
+        "latitude": lat,
+        "longitude": lon,
+        "month": state["month"],
+        "hour": state.get("hour", 12),
+        "year": state.get("year", 2026),
+        "region": region,
+        "depth_zone": depth_zone,
+    }])
+
+    raw[["region","depth_zone"]] = model3_encoder.ransform(raw[["region","depth_zone"]].astype(str))
+
+    pred = model3.predict(raw)[0]
+    proba = model3.proba(raw)[0]
+
+    state["severity"] = model3.inverse_transform(pred)[0]
+    state["severity_confidence"] = float([proba])
+
+    shap_vals = model3_shap.shap_values(raw)
     vals = shap_vals[0] if isinstance(shap_vals,list) else shap_vals[0]
 
     state["shap_factors"] = dict(zip(raw.column,vals.tolist() if hasattr(vals,"tolist") else vals))
