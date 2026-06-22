@@ -83,5 +83,10 @@ def cyclone_severity(state:DisasterState) -> DisasterState:
     state["severity"] = model2_le.inverse_transform([pred])[0]
     state["severity_confidence"] = float(proba[pred])
 
+    shap_vals = model2_shap.shap_values(raw)
+    vals = shap_vals[0] if isinstance(shap_vals,list) else shap_vals[0]
 
+    state["shap_factors"] = dict(zip(raw.column,vals.tolist() if hasattr(vals,"tolist") else vals))
+
+    return state
 
