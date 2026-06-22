@@ -5,6 +5,7 @@ import shap
 from typing import Optional,TypedDict,Literal
 
 #Loading Models
+
 model1 = joblib.load("models/model1_cyclone_vs_earthquake.pkl")
 
 model2 = joblib.load("models/model2_cyclone_severity.pkl")
