@@ -35,7 +35,7 @@ class DisasterState(TypedDict):
     severity_confidence: Optional[int]
     shap_factors: Optional[dict]
 
-# Routing for model 1
+# Model1 :- Routing
 def route_disaster_type(state:DisasterState) -> DisasterState:
 
     month_sin = np.sin(2*np.pi*state["month"]/12)
