@@ -4,7 +4,6 @@ import requests
 from datetime import datetime,timezone,timedelta
 from typing import TypedDict,Optional
 
-
 load_dotenv()
 
 OWM_API_KEY = os.environ["OWN_API_KEY"]
@@ -96,7 +95,6 @@ def seismic_data(lat:float,lon:float) -> dict:
     }
 
 #Node 
-
 class DisasterState(TypedDict):
 
     raw_input : dict
