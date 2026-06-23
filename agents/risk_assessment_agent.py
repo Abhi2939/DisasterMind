@@ -10,10 +10,11 @@ model1 = joblib.load("models/model1_cyclone_vs_earthquake.pkl")
 
 model2 = joblib.load("models/model2_cyclone_severity.pkl")
 model2_encoder = joblib.load("models/model2_encoder.pkl")
-model2_le = joblib.load("models/model2_label_enocoder.pkl")
+model2_le = joblib.load("models/model2_label_encoder.pkl")
 
 model3 = joblib.load("models/model3_earthquake_severity.pkl")
 model3_encoder = joblib.load("models/model3_encoder.pkl")
+model3_le = joblib.load("models/model3_label_encoder.pkl")
 
 model2_shap = shap.TreeExplainer(model2)
 model3_shap = shap.TreeExplainer(model3.named_steps["clf"])
@@ -42,8 +43,8 @@ def route_disaster_type(state:DisasterState) -> DisasterState:
     month_cos= np.cos(2*np.pi*state["month"]/12)
 
     X = pd.DataFrame([{
-        "latitude":state["lat"],
-        "longitutude":state["lon"],
+        "latitude":state["latitude"],
+        "longitude":state["longitude"],
         "month_sin":month_sin,
         "month_cos":month_cos
     }])
@@ -72,10 +73,10 @@ def cyclone_severity(state:DisasterState) -> DisasterState:
         "month":state["month"],
         "genesis_lat":state["latitude"],
         "genesis_lon":state["longitude"],
-        "initial_wind_speed":state.get("initial_wind", np.nan)
+        "initial_wind":state.get("initial_wind", np.nan)
     }])
 
-    raw[["season","subbasin"]] = model2_encoder.transfrom(raw[["season", "subbasin"]].astype(str))
+    raw[["season","subbasin"]] = model2_encoder.transform(raw[["season", "subbasin"]].astype(str))
 
     pred = model2.predict(raw)[0]
     proba = model2.predict_proba(raw)[0]
@@ -86,7 +87,7 @@ def cyclone_severity(state:DisasterState) -> DisasterState:
     shap_vals = model2_shap.shap_values(raw)
     vals = shap_vals[0] if isinstance(shap_vals,list) else shap_vals[0]
 
-    state["shap_factors"] = dict(zip(raw.column,vals.tolist() if hasattr(vals,"tolist") else vals))
+    state["shap_factors"] = dict(zip(raw.columns,vals.tolist() if hasattr(vals,"tolist") else vals))
 
     return state
 
@@ -106,11 +107,12 @@ def earthquake_severity(state:DisasterState) -> DisasterState:
         "Central"
     )
 
-    depth_zone = pd.cut(
-        depth,
-        bins=[0, 70, 300, 700],
-        labels=['Shallow', 'Intermediate', 'Deep']
+    depth_zone = (
+        "Shallow" if depth <= 70 else
+        "Intermediate" if depth <= 300 else
+        "Deep"
     )
+
     raw = pd.DataFrame([{
         "depth": depth,
         "log_depth": np.log1p(max(depth, 0)),
@@ -123,18 +125,18 @@ def earthquake_severity(state:DisasterState) -> DisasterState:
         "depth_zone": depth_zone,
     }])
 
-    raw[["region","depth_zone"]] = model3_encoder.ransform(raw[["region","depth_zone"]].astype(str))
+    raw[["region","depth_zone"]] = model3_encoder.transform(raw[["region","depth_zone"]].astype(str))
 
     pred = model3.predict(raw)[0]
-    proba = model3.proba(raw)[0]
+    proba = model3.predict_proba(raw)[0]
 
-    state["severity"] = model3.inverse_transform(pred)[0]
-    state["severity_confidence"] = float([proba])
+    state["severity"] = model3_le.inverse_transform(pred)[0]
+    state["severity_confidence"] = float(proba[pred])
 
     shap_vals = model3_shap.shap_values(raw)
     vals = shap_vals[0] if isinstance(shap_vals,list) else shap_vals[0]
 
-    state["shap_factors"] = dict(zip(raw.column,vals.tolist() if hasattr(vals,"tolist") else vals))
+    state["shap_factors"] = dict(zip(raw.columns,vals.tolist() if hasattr(vals,"tolist") else vals))
 
     return state
 
