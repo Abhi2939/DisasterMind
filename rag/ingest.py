@@ -7,7 +7,7 @@ from langchain_chroma import Chroma
 from langchain_core.documents import Document
 
 DATASET_DIR = "rag/dataset"
-VECTOR_DB = "rag/vector_db"
+VECTOR_DB_DIR = "rag/vector_db"
 
 DOCS = {
     "file":"IMD Cyclone.pdf","disaster_type":"Cyclone","source":"IMD",
@@ -29,7 +29,7 @@ def load_pdf(filepath:str)->str:
     
     return pages
 
-def build_document() -> list[Document]:
+def build_documents() -> list[Document]:
 
     splitter = RecursiveCharacterTextSplitter(
         chunk_size = 800,
@@ -45,6 +45,40 @@ def build_document() -> list[Document]:
             print(f"Path not found at {path}")
             continue
 
-        
+        pages = load_pdf_text(path)
+        for page_num,page_text in pages:
+            chunks = splitter.split_text(page_text)
+            for chunk in chunks:
+                all_docs.append(
+                    Document(
+                        page_content=chunk,
+                        metadata = {
+                            "source":doc_meta["source"],
+                            "disaster_type":doc_meta["disaster_type"],
+                            "file":doc_meta["file"],
+                            "page":page_num,
+                        }
+                    )
+                )
+    
+    return all_docs
+
+def ingest():
+    docs = build_documents()
+    print(f"Total chunks to embed: {len(docs)}")
+
+    embeddings = HuggingFaceEmbeddings(
+        model = "sentence-transformers/all-MiniLM-L6-v2"
+    )
+
+    vectordb = Chroma(
+        Document=docs,
+        embeddings=embeddings,
+        persist_directory=VECTOR_DB_DIR,
+    )
+    print(f"Ingested {len(docs)} chunks into {VECTOR_DB_DIR}")
+    return vectordb
 
 
+if __name__ == "__main__":
+    ingest()
