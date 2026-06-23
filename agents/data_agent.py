@@ -8,7 +8,6 @@ load_dotenv()
 
 OWM_API_KEY = os.environ["OWN_API_KEY"]
 
-
 #geocoding
 def geocode_location(location:str) -> dict:
     url = "https://api.openweathermap.org/geo/1.0/direct"
