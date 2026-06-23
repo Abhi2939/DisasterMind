@@ -14,7 +14,7 @@ vector_db = Chroma(
     embedding_function=embeddings
 )
 
-class DisasterStete(TypedDict):
+class DisasterState(TypedDict):
 
     disaster_type : Optional[Literal["cyclone","earthquake"]]
     severity : Optional[str]
@@ -25,7 +25,7 @@ class DisasterStete(TypedDict):
     retrieved_context : Optional[str]
     retrieved_sources : Optional[list]
 
-def build_query(state:DisasterStete) -> str:
+def build_query(state:DisasterState) -> str:
 
     disaster_type = state["disaster_type"]
     severity = state["severity"]
@@ -41,7 +41,7 @@ def build_query(state:DisasterStete) -> str:
         f"driven by {factor_names}"
     )
 
-def retrieve_guidance(state:DisasterStete,k:int = 4)->DisasterStete:
+def retrieve_guidance(state:DisasterState,k:int = 4)->DisasterState:
 
     query = build_query()
 
@@ -74,3 +74,27 @@ def retrieve_guidance(state:DisasterStete,k:int = 4)->DisasterStete:
     state["retrieved_sources"] = sources
 
     return state
+
+if __name__ == "__main__":
+    test_state: DisasterState = {
+        "disaster_type": "cyclone",
+        "severity": "Severe",
+        "severity_confidence": 0.81,
+        "shap_factors": {
+            "initial_wind": 0.42,
+            "genesis_lat": -0.18,
+            "month": 0.05,
+            "season": 0.02,
+        },
+        "earthquake_data_is_live": None,
+        "retrieved_context": None,
+        "retrieved_sources": None,
+    }
+
+    result = retrieve_guidance(test_state)
+    print("Query used:", build_query(test_state))
+    print("\n--- Retrieved context ---\n")
+    print(result["retrieved_context"][:1000])
+    print("\n--- Sources ---")
+    for s in result["retrieved_sources"]:
+        print(s)
