@@ -79,3 +79,13 @@ graph.add_edge("report",END)
 graph.add_edge("reject",END)
 
 app = graph.compile()
+
+if __name__ == "__main__":
+    result = app.invoke({"raw_input": {"location": "Visakhapatnam, India"}})
+
+    if result.get("report_path"):
+        print(f"Disaster type: {result['disaster_type']}")
+        print(f"Severity: {result['severity']} ({result['severity_confidence']:.0%} confidence)")
+        print(f"Report saved to: {result['report_path']}")
+    else:
+        print("Pipeline rejected input:", result.get("briefing"))
