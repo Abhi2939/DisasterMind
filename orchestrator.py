@@ -25,7 +25,7 @@ class DisasterState(TypedDict):
     is_valid: bool
     validation_errors: list
 
-    #risk assessment agent
+    #Risk assessment agent
     disaster_type: Optional[Literal["earthquake","cyclone"]]
     severity: Optional[str]
     severity_confidence: Optional[int]
@@ -40,4 +40,26 @@ class DisasterState(TypedDict):
 
     #Report Agent
     report_path : Optional[str]
+
+def validation_gate(state:DisasterState) -> str:
+    return "route" if state["is_valid"] else "reject"
+
+def pick_branch(state:DisasterState) -> str:
+    return state["disaster_type"]
+
+def reject_invalid(state: DisasterState) -> DisasterState:
+    state["briefing"] = f"Input rejected: {', '.join(state['validation_errors'])}"
+    return state
+
+#Build Graph
+graph = StateGraph(DisasterState)
+
+graph.add_node("data_agent",data_agent)
+graph.add_node("route",route_disaster_type)
+graph.add_node("cyclone severity",cyclone_severity)
+graph.add_node("earthquake severity",earthquake_severity)
+graph.add_node("rag",retrieve_guidance)
+graph.add_node("plan",generate_briefing)
+graph.add_node("report",generate_report)
+graph.add_node("reject",reject_invalid)
 
