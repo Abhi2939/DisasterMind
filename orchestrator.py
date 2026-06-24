@@ -7,7 +7,6 @@ from agents.rag_agent import retrieve_guidance
 from agents.planning_agent import generate_briefing
 from agents.report_agent import generate_report
 
-
 class DisasterState(TypedDict):
 
     raw_input : dict
