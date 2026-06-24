@@ -63,3 +63,19 @@ graph.add_node("plan",generate_briefing)
 graph.add_node("report",generate_report)
 graph.add_node("reject",reject_invalid)
 
+
+graph.set_entry_point("data_agent")
+
+graph.add_conditional_edges("data_agent",validation_gate,{
+    "route": "route",
+    "reject": "reject",
+})
+
+graph.add_edge("cyclone_severity","rag")
+graph.add_edge("earthquake severity","rag")
+graph.add_edge("rag","plan")
+graph.add_edge("plan","report")
+graph.add_edge("report",END)
+graph.add_edge("reject",END)
+
+app = graph.compile()
