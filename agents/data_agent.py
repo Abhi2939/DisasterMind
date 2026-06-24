@@ -3,10 +3,11 @@ import os
 import requests
 from datetime import datetime,timezone,timedelta
 from typing import TypedDict,Optional
+from config import OWM_API_KEY
 
 load_dotenv()
 
-OWM_API_KEY = os.environ["OWN_API_KEY"]
+#OWM_API_KEY = os.environ["OWN_API_KEY"]
 
 #geocoding
 def geocode_location(location:str) -> dict:
@@ -22,7 +23,7 @@ def geocode_location(location:str) -> dict:
 #OWM API
 def fetch_current_waather(lat:float,lon:float) -> dict:
     url = "https://api.openweathermap.org/data/2.5/weather"
-    resp = requests.get(url,params={lat:"lat",lon:"lon","appid":OWM_API_KEY,"units":"metric"},timeout=10)
+    resp = requests.get(url,params={"lat":lat,"lon":lon,"appid":OWM_API_KEY,"units":"metric"},timeout=10)
     resp.raise_for_status()
     data = resp.json()
     wind_ms = data.get("wind",{}).get("speed")
@@ -43,7 +44,7 @@ REGION_PROFILE = {
 }
 
 def get_seismic_region(lat:float,lon:float) -> str:
-    if lat >= 28: return "Himalyan"
+    if lat >= 28: return "Himalayan"
     elif lon <= 72 : return "Western"
     elif lat <= 15 : return 'Southern'
     elif lon >= 90 : return "Northeast"
@@ -52,7 +53,7 @@ def get_seismic_region(lat:float,lon:float) -> str:
 
 def fetch_live_earthquake(lat:float,lon:float,radius_km: int = 300,days : int = 30) -> Optional[dict]:
 
-    url = "https://earthquake.usgs.gov/fdsnws/event/1.0/query"
+    url = "https://earthquake.usgs.gov/fdsnws/event/1/query"
     params = {
         "format": "geojson",
         "latitude": lat,
@@ -113,7 +114,7 @@ class DisasterState(TypedDict):
 def get_subbasin(lat:float,lon:float) -> Optional[str]:
 
     if 5<=lat<=22 and 80 <=lon<=100: return "BB"
-    elif 5<=lat<=25 and 60<=lon<=78: return "AB"
+    elif 5<=lat<=25 and 60<=lon<=78: return "AS"
 
     return None
 
@@ -132,9 +133,9 @@ def data_agent(state:DisasterState) -> DisasterState:
     lat,lon = geo["latitude"],geo["longitude"]
     now = datetime.now(timezone.utc)
     weather = fetch_current_waather(lat,lon)
-    seismic = get_seismic_region(lat,lon)
+    seismic = seismic_data(lat,lon)
 
-    state.upadte({
+    state.update({
         "latitude":lat,"longitude":lon,
         "month": now.month, "hour": now.hour, "year": now.year,
         "subbasin":get_subbasin(lat,lon),

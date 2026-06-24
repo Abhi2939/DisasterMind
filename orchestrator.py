@@ -56,8 +56,8 @@ graph = StateGraph(DisasterState)
 
 graph.add_node("data_agent",data_agent)
 graph.add_node("route",route_disaster_type)
-graph.add_node("cyclone severity",cyclone_severity)
-graph.add_node("earthquake severity",earthquake_severity)
+graph.add_node("cyclone_severity",cyclone_severity)
+graph.add_node("earthquake_severity",earthquake_severity)
 graph.add_node("rag",retrieve_guidance)
 graph.add_node("plan",generate_briefing)
 graph.add_node("report",generate_report)
@@ -72,7 +72,7 @@ graph.add_conditional_edges("data_agent",validation_gate,{
 })
 
 graph.add_edge("cyclone_severity","rag")
-graph.add_edge("earthquake severity","rag")
+graph.add_edge("earthquake_severity","rag")
 graph.add_edge("rag","plan")
 graph.add_edge("plan","report")
 graph.add_edge("report",END)
@@ -82,6 +82,11 @@ app = graph.compile()
 
 if __name__ == "__main__":
     result = app.invoke({"raw_input": {"location": "Visakhapatnam, India"}})
+
+    print("\n--- FULL STATE DUMP ---")
+    for key, value in result.items():
+        print(f"{key}: {value}")
+    print("--- END DUMP ---\n")
 
     if result.get("report_path"):
         print(f"Disaster type: {result['disaster_type']}")
