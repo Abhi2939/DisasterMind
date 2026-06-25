@@ -6,6 +6,9 @@ from ragas.run_config import RunConfig
 from langchain_groq import ChatGroq
 from config import GROQ_API_KEY
 
+from langchain_ollama import ChatOllama
+from langchain_core.prompts import ChatPromptTemplate
+
 # Test Question Answering 
 TEST_SET = [
     # ── CYCLONE (3 questions from IMD SOP) ──────────────────────────────
@@ -43,52 +46,94 @@ TEST_SET = [
     },
 ]
 
+eval_llm = ChatGroq(
+    model="llama-3.1-8b-instant",
+    api_key=GROQ_API_KEY,
+    temperature=0,
+    request_timeout=60,
+)
+
+eval_prompt = ChatPromptTemplate.from_template(
+    """Answer the question using ONLY the information in the context below.
+Provide a complete answer covering ALL relevant points, numbers, and categories mentioned in the context — do not summarize, abbreviate, or omit details. Use specific numbers and exact terms from the context where present.
+If the context does not contain the answer, say so explicitly rather than guessing.
+
+Context:
+{context}
+
+Question: {question}
+
+Answer:"""
+)
+
+eval_chain = eval_prompt | eval_llm
+
 
 def build_dataset():
 
     rows = []
     for case in TEST_SET:
-        results = vector_db.similarity_search(
-            case["question"],k=6,filter={"disaster_type":case["disaster_type"]}
+        results = vector_db.max_marginal_relevance_search(
+            case["question"],
+            k=6,
+            fetch_k=20,
+            lambda_mult=0.7,
+            filter={"disaster_type":case["disaster_type"]},
         )
 
         retrieved_chunks = [doc.page_content for doc in results]
+        context_text = "\n\n".join(retrieved_chunks)
+
+        generated_answer = eval_chain.invoke({
+            "context": context_text,
+            "question": case["question"],
+        }).content
 
         rows.append(
             {
                 "user_input":case["question"],
                 "retrieved_contexts":retrieved_chunks,
-                "response": " ".join(retrieved_chunks)[:500], 
+                "response": generated_answer, 
                 "reference": case["ground_truth"]
             }
         )
 
     return EvaluationDataset.from_list(rows)
 
+judge_llm = LangchainLLMWrapper(
+    ChatOllama(
+        model="llama3.1:8b",  
+        temperature=0,
+        base_url="http://localhost:11434",
+    )
+)
+
+
 def main():
     dataset = build_dataset()
 
-    llm = LangchainLLMWrapper(
-        ChatGroq(
-            model = "llama-3.3-70b-versatile",
-            api_key=GROQ_API_KEY,
-            temperature=0
-        )
-    )
+    # llm = LangchainLLMWrapper(
+    #     ChatOllama(
+    #         model = "llama3.1:8b",
+    #         #api_key=GROQ_API_KEY,
+    #         temperature=0,
+    #         base_url="http://localhost:11434"
+    #     )
+    # )
 
     results = evaluate(
         dataset=dataset,
         metrics=[
-            LLMContextRecall(llm=llm),
-            Faithfulness(llm=llm),
-            FactualCorrectness(llm=llm),
-            LLMContextPrecisionWithReference(llm=llm)
+            LLMContextRecall(llm=judge_llm),
+            Faithfulness(llm=judge_llm),
+            FactualCorrectness(llm=judge_llm),
+            LLMContextPrecisionWithReference(llm=judge_llm)
         ],
-        llm=llm,
+        #llm=llm,
         run_config=RunConfig(
-            max_workers=2,       
-            max_wait=120,
-            timeout=60,
+            max_workers=1,       
+            max_wait=300,
+            timeout=180,
         )
     )
 
