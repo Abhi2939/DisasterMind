@@ -2,6 +2,7 @@ from agents.rag_agent import vector_db
 from ragas import evaluate,EvaluationDataset
 from ragas.metrics import LLMContextRecall,Faithfulness,FactualCorrectness,LLMContextPrecisionWithReference
 from ragas.llms import LangchainLLMWrapper
+from ragas.run_config import RunConfig
 from langchain_groq import ChatGroq
 from config import GROQ_API_KEY
 
@@ -48,7 +49,7 @@ def build_dataset():
     rows = []
     for case in TEST_SET:
         results = vector_db.similarity_search(
-            case["question"],k=4,filter={"disaster_type":case["disaster_type"]}
+            case["question"],k=6,filter={"disaster_type":case["disaster_type"]}
         )
 
         retrieved_chunks = [doc.page_content for doc in results]
@@ -82,7 +83,13 @@ def main():
             Faithfulness(llm=llm),
             FactualCorrectness(llm=llm),
             LLMContextPrecisionWithReference(llm=llm)
-        ]
+        ],
+        llm=llm,
+        run_config=RunConfig(
+            max_workers=2,       
+            max_wait=120,
+            timeout=60,
+        )
     )
 
     print("\n=== RAGAS Evaluation Results ===")

@@ -4,9 +4,10 @@ from langchain_core.prompts import ChatPromptTemplate
 from config import GROQ_API_KEY
 
 llm = ChatGroq(
-    model = "llama-3.3-70b-versatile",
+    model = "llama-3.1-8b-instant",#llama-3.3-70b-versatile
     api_key=GROQ_API_KEY,
-    temperature=0.3
+    temperature=0.3,
+    request_timeout=60
 )
 
 prompt = ChatPromptTemplate.from_template(

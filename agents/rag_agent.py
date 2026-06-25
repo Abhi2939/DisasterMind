@@ -41,7 +41,7 @@ def build_query(state:DisasterState) -> str:
         f"driven by {factor_names}"
     )
 
-def retrieve_guidance(state:DisasterState,k:int = 4)->DisasterState:
+def retrieve_guidance(state:DisasterState,k:int = 6)->DisasterState:
 
     query = build_query()
 
