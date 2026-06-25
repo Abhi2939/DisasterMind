@@ -38,4 +38,24 @@ TEST_SET = [
         "disaster_type": "Earthquake",
     },
 ]
+def build_dataset():
+
+    rows = []
+    for case in TEST_SET:
+        results = vector_db.similarity_search(
+            case["question"],k=4,filter={"disaster_type":case["disaster_type"]}
+        )
+
+        retrieved_chunks = [doc.page_content for doc in results]
+
+        rows.append(
+            {
+                "user_input":case["question"],
+                "retrieved_context":retrieved_chunks,
+                "response": " ".join(retrieved_chunks)[:500], 
+                "reference": case["ground_truth"]
+            }
+        )
+
+    return EvaluationDataset.from_list(rows)
 
