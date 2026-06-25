@@ -59,3 +59,32 @@ def build_dataset():
 
     return EvaluationDataset.from_list(rows)
 
+def main():
+    dataset = build_dataset()
+
+    llm = LangchainLLMWrapper(
+        ChatGroq(
+            model = "llama-3.3-70b-versatile",
+            api_key=GROQ_API_KEY,
+            temperature=0
+        )
+    )
+
+    results = evaluate(
+        dataset=dataset,
+        metrics=[
+            LLMContextRecall(llm=llm),
+            Faithfulness(llm=llm),
+            FactualCorrectness(llm=llm),
+            LLMContextPrecisionWithReference(llm=llm)
+        ]
+    )
+
+    print("\n=== RAGAS Evaluation Results ===")
+    print(results)
+    results.to_pandas().to_csv("rag_evaluation_results.csv", index=False)
+    print("Saved to rag_evaluation_results.csv")
+
+
+if __name__ == "__main__":
+    main()
