@@ -70,5 +70,3 @@ def get_report(filename:str):
         raise HTTPException(status_code=404, detail="Report not found")
     
     return FileResponse(safe_path,media_type="application/pdf",filename=filename)
-
-@app.get("")
