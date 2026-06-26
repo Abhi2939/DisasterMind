@@ -48,6 +48,15 @@ def build_documents() -> list[Document]:
         for page_num,page_text in pages:
             chunks = splitter.split_text(page_text)
             for chunk in chunks:
+                words = chunk.split()
+                if len(words) < 40:
+                    continue
+
+                lines = [l.strip() for l in chunk.splitlines() if l.strip()]
+                dot_lines = sum(1 for l in lines if l.count(".") >= 3 or l[-1].isdigit())
+                if len(lines) > 0 and dot_lines / len(lines) > 0.5:
+                    continue
+
                 all_docs.append(
                     Document(
                         page_content=chunk,

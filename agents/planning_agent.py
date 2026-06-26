@@ -64,7 +64,7 @@ def generate_briefing(state:DisasterState) -> DisasterState:
             "Phrase the briefing accordingly — do not imply an earthquake is currently happening."
         )
 
-    response = llm.invoke(
+    response = chain.invoke(
         {
             "disaster_type":state["disaster_type"],
             "severity":state["severity"],

@@ -25,10 +25,18 @@ class DisasterState(TypedDict):
     retrieved_context : Optional[str]
     retrieved_sources : Optional[list]
 
+SEVERITY_TO_IMD = {
+    "Low": "Depression or Deep Depression",
+    "Moderate": "Cyclonic Storm",
+    "Severe": "Severe Cyclonic Storm",
+    "Very Severe": "Very Severe Cyclonic Storm",
+}
+
 def build_query(state:DisasterState) -> str:
 
     disaster_type = state["disaster_type"]
     severity = state["severity"]
+    imd_term = SEVERITY_TO_IMD.get(severity, severity)
 
     top_factors = sorted(
         state["shap_factors"].items(), key=lambda kv: abs(kv[1]), reverse=True
@@ -37,19 +45,28 @@ def build_query(state:DisasterState) -> str:
     factor_names = ", ".join(f"{name}" for name, _ in top_factors)
 
     return (
-        f"Guidance and response protocol for {severity} severity {disaster_type}, "
+        f"Response protocol and warning procedure for {imd_term} {disaster_type}, "
         f"driven by {factor_names}"
     )
 
 def retrieve_guidance(state:DisasterState,k:int = 6)->DisasterState:
 
-    query = build_query()
+    query = build_query(state)
 
     results = vector_db.similarity_search(
         query,
-        k=k,
+        k=k*2,
         filter={"disaster_type": state["disaster_type"].capitalize()}
     )
+
+    results = [
+        doc for doc in results
+        if len(doc.page_content.split()) > 50
+        # and not any(
+        #     doc.page_content.count(marker) > 3
+        #     for marker in ["....", "  ", "\t"]
+        # )
+    ][:k]
 
     if not results:
         state["retrieved_context"] = ""

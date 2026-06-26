@@ -36,7 +36,7 @@ class DisasterState(TypedDict):
     severity_confidence: Optional[int]
     shap_factors: Optional[dict]
 
-# Model1 :- Routing
+# Model1 :- Routing 
 def route_disaster_type(state:DisasterState) -> DisasterState:
 
     month_sin = np.sin(2*np.pi*state["month"]/12)
@@ -103,7 +103,7 @@ def earthquake_severity(state:DisasterState) -> DisasterState:
         "Himalayan" if lat >= 28 else
         "Western" if lon <= 72 else
         "Southern" if lat <= 15 else
-        "Northern" if lon>=90 else
+        "Northeast" if lon >=90 else
         "Central"
     )
 

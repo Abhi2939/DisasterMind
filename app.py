@@ -23,7 +23,7 @@ class DisasterResponse(BaseModel):
     disaster_type: Optional[str] = None
     severity: Optional[float] = None
     severity_confidence: Optional[float] = None
-    breifing : Optional[str] = None
+    briefing : Optional[str] = None
     report_path : Optional[str] = None
     report_url : Optional[str] = None
 
@@ -35,7 +35,7 @@ def root():
     return {"status":"DisasterMind API is Running"}
 
 @app.post("/predict",response_model = DisasterResponse)
-def predict(request : DisasterResponse):
+def predict(request : DisasterRequest):
 
     raw_input = request.model_dump(exclude_none=True)
 
@@ -58,7 +58,7 @@ def predict(request : DisasterResponse):
         report_url=report_url
     )
 
-@app.get("reports/{filename}")
+@app.get("/reports/{filename}")
 def get_report(filename:str):
 
     safe_path = os.path.normpath(os.path.join(REPORT_DIR,filename))

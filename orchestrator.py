@@ -28,7 +28,7 @@ class DisasterState(TypedDict):
     #Risk assessment agent
     disaster_type: Optional[Literal["earthquake","cyclone"]]
     severity: Optional[str]
-    severity_confidence: Optional[int]
+    severity_confidence: Optional[float]
     shap_factors: Optional[dict]
 
     #RAG agent 
@@ -69,6 +69,11 @@ graph.set_entry_point("data_agent")
 graph.add_conditional_edges("data_agent",validation_gate,{
     "route": "route",
     "reject": "reject",
+})
+
+graph.add_conditional_edges("route", pick_branch, {
+    "cyclone": "cyclone_severity",
+    "earthquake": "earthquake_severity",
 })
 
 graph.add_edge("cyclone_severity","rag")

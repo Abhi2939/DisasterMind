@@ -100,11 +100,20 @@ def build_dataset():
 
     return EvaluationDataset.from_list(rows)
 
+# judge_llm = LangchainLLMWrapper(
+#     ChatOllama(
+#         model="llama3.1:8b",  
+#         temperature=0,
+#         base_url="http://localhost:11434",
+#     )
+# )
+
 judge_llm = LangchainLLMWrapper(
-    ChatOllama(
-        model="llama3.1:8b",  
+    ChatGroq(
+        model="llama-3.1-8b-instant",
+        api_key=GROQ_API_KEY,
         temperature=0,
-        base_url="http://localhost:11434",
+        request_timeout=60,
     )
 )
 
