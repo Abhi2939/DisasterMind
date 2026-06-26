@@ -52,7 +52,7 @@ Three models are trained and serialized with joblib:
 
 | Model | Task | Algorithm | Performance |
 |-------|------|-----------|-------------|
-| model1 | Cyclone vs Earthquake classifier | Random Forest | Macro F1: 0.92 |
+| model1 | Cyclone vs Earthquake classifier | Gradient Boosted Trees | Macro F1: 0.92 |
 | model2 | Cyclone severity prediction | Gradient Boosted Trees | F1: 0.66 |
 | model3 | Earthquake severity prediction | Pipeline (OrdinalEncoder + GBT) | F1: 0.64 |
 
