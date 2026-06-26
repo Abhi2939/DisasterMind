@@ -1,9 +1,10 @@
+import os
 from typing import Optional,List
 from pydantic import BaseModel
 from fastapi import FastAPI,HTTPException
+from fastapi.responses import FileResponse
 
 from orchestrator import disaster_graph
-
 
 app = FastAPI()
 
@@ -24,6 +25,8 @@ class DisasterResponse(BaseModel):
     severity_confidence: Optional[float] = None
     breifing : Optional[str] = None
     report_path : Optional[str] = None
+
+REPORT_DIR = os.path.abspath("report")
 
 @app.get("/")
 def root():
@@ -49,4 +52,15 @@ def predict(request : DisasterResponse):
         report_path=result.get("report_path"),
     )
 
+@app.get("reports/{filename}")
+def get_report(filename:str):
 
+    safe_path = os.path.normpath(os.path.join(REPORT_DIR,filename))
+
+    if not safe_path.startswith(REPORT_DIR):
+        raise HTTPException(status_code=400, detail="Invalid filename")
+    
+    if not os.path.isfile(safe_path):
+        raise HTTPException(status_code=404, detail="Report not found")
+    
+    return FileResponse(safe_path,media_type="application/pdf",filename=filename)
