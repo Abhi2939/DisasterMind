@@ -130,8 +130,8 @@ def earthquake_severity(state:DisasterState) -> DisasterState:
     pred = model3.predict(raw)[0]
     proba = model3.predict_proba(raw)[0]
 
-    state["severity"] = model3_le.inverse_transform(pred)[0]
-    state["severity_confidence"] = float(proba[pred])
+    state["severity"] = model3_le.inverse_transform([pred])[0]
+    state["severity_confidence"] = float(proba[int(pred)])
 
     shap_vals = model3_shap.shap_values(raw)
     vals = shap_vals[0] if isinstance(shap_vals,list) else shap_vals[0]
