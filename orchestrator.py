@@ -78,10 +78,10 @@ graph.add_edge("plan","report")
 graph.add_edge("report",END)
 graph.add_edge("reject",END)
 
-app = graph.compile()
+disaster_graph = graph.compile()
 
 if __name__ == "__main__":
-    result = app.invoke({"raw_input": {"location": "Visakhapatnam, India"}})
+    result = disaster_graph.invoke({"raw_input": {"location": "Visakhapatnam, India"}})
 
     print("\n--- FULL STATE DUMP ---")
     for key, value in result.items():
