@@ -25,6 +25,8 @@ class DisasterResponse(BaseModel):
     severity_confidence: Optional[float] = None
     breifing : Optional[str] = None
     report_path : Optional[str] = None
+    report_url : Optional[str] = None
+
 
 REPORT_DIR = os.path.abspath("report")
 
@@ -42,6 +44,9 @@ def predict(request : DisasterResponse):
     except Exception as e:
         raise HTTPException(status_code=500,detail=f"Pipeline error{e}")
     
+    report_path = result.get("report_path")
+    report_url = f"/report/{os.path.basename(report_path)}" if report_path else None
+    
     return DisasterResponse(
         is_valid=result.get("is_valid", False),
         validation_errors=result.get("validation_errors", []),
@@ -50,6 +55,7 @@ def predict(request : DisasterResponse):
         severity_confidence=result.get("severity_confidence"),
         briefing=result.get("briefing"),
         report_path=result.get("report_path"),
+        report_url=report_url
     )
 
 @app.get("reports/{filename}")
@@ -64,3 +70,5 @@ def get_report(filename:str):
         raise HTTPException(status_code=404, detail="Report not found")
     
     return FileResponse(safe_path,media_type="application/pdf",filename=filename)
+
+@app.get("")
