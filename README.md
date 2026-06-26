@@ -2,7 +2,7 @@
 
 A multi-agent agentic AI system for disaster prediction and response planning, targeting cyclone and earthquake events across India. Built using LangGraph, FastAPI, and Groq-hosted LLaMA models.
 
-Developed as part of a research internship at the Climate Lab, NIT Delhi.
+Developed as part of a research internship at NIT Delhi.
 
 ---
 
