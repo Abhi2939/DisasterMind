@@ -21,7 +21,7 @@ class DisasterResponse(BaseModel):
     is_valid : bool
     validation_errors: List[str]
     disaster_type: Optional[str] = None
-    severity: Optional[float] = None
+    severity: Optional[str] = None
     severity_confidence: Optional[float] = None
     briefing : Optional[str] = None
     report_path : Optional[str] = None
