@@ -49,19 +49,21 @@ def build_query(state:DisasterState) -> str:
         f"driven by {factor_names}"
     )
 
-def retrieve_guidance(state:DisasterState,k:int = 6)->DisasterState:
+def retrieve_guidance(state:DisasterState,k:int = 8)->DisasterState:
 
     query = build_query(state)
 
-    results = vector_db.similarity_search(
+    results = vector_db.max_marginal_relevance_search(
         query,
-        k=k*2,
+        k=k,
+        fetch_k=20,
+        lambda_mult=0.6,
         filter={"disaster_type": state["disaster_type"].capitalize()}
     )
 
     results = [
         doc for doc in results
-        if len(doc.page_content.split()) > 50
+        if len(doc.page_content.split()) > 40
         # and not any(
         #     doc.page_content.count(marker) > 3
         #     for marker in ["....", "  ", "\t"]
